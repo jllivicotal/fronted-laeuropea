@@ -1,0 +1,211 @@
+<nav class="bg-white shadow-lg sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between h-16">
+      <!-- Logo y navegación principal -->
+      <div class="flex">
+        <div class="flex-shrink-0 flex items-center">
+          <a routerLink="/" class="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+            <img src="https://www.laeuropea.com.ec/wp-content/uploads/2023/06/LOGO-MOVIL.png" alt="La Europea" class="h-10 w-auto">
+            <span class="hidden sm:inline text-xl font-bold text-gray-800">La Europea</span>
+          </a>
+        </div>
+
+        <!-- Links de navegación - Desktop -->
+        <div class="hidden md:ml-8 md:flex md:space-x-8">
+          <a
+            routerLink="/productos"
+            routerLinkActive="border-b-2 border-gray-800 text-gray-900"
+            [routerLinkActiveOptions]="{exact: false}"
+            class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 border-b-2 border-transparent transition-all"
+          >
+            Productos
+          </a>
+
+          @if (currentUser$ | async; as user) {
+            <a
+              routerLink="/mis-pedidos"
+              routerLinkActive="border-b-2 border-gray-800 text-gray-900"
+              [routerLinkActiveOptions]="{exact: false}"
+              class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 border-b-2 border-transparent transition-all"
+            >
+              Mis Pedidos
+            </a>
+
+            @if (user.rol === 'ADMIN' || user.rol === 'MANAGER') {
+              <a
+                routerLink="/admin/ordenes"
+                routerLinkActive="border-b-2 border-gray-800 text-gray-900"
+                [routerLinkActiveOptions]="{exact: false}"
+                class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 border-b-2 border-transparent transition-all"
+              >
+                Dashboard Admin
+              </a>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Carrito, Usuario y menú móvil -->
+      <div class="flex items-center">
+        <!-- Carrito -->
+        <a
+          routerLink="/carrito"
+          class="relative p-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all mr-2"
+        >
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          @if (getCantidadCarrito() > 0) {
+            <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+              {{ getCantidadCarrito() }}
+            </span>
+          }
+        </a>
+
+        <!-- Usuario logueado -->
+        @if (currentUser$ | async; as user) {
+          <div class="hidden md:block ml-4 relative">
+            <button
+              (click)="toggleMenu()"
+              class="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none transition-colors"
+            >
+              <div class="h-8 w-8 rounded-full bg-gray-800 flex items-center justify-center text-white font-semibold">
+                {{ user.nombre.charAt(0).toUpperCase() }}
+              </div>
+              <span class="hidden lg:block">{{ user.nombre }}</span>
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            <!-- Dropdown menu -->
+            @if (isMenuOpen) {
+              <div class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                <div class="py-1">
+                  <div class="px-4 py-2 text-xs text-gray-500 border-b">
+                    {{ user.email }}
+                    <div class="text-gray-400 mt-1">{{ user.rol }}</div>
+                  </div>
+                  <button
+                    (click)="logout()"
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    Cerrar Sesión
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- Usuario no logueado - Solo mostrar si NO está autenticado -->
+          @if (!isAuthenticated()) {
+            <div class="hidden md:flex md:items-center md:space-x-4 ml-4">
+              <a
+                routerLink="/login"
+                class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+              >
+                Iniciar Sesión
+              </a>
+              <a
+                routerLink="/register"
+                class="px-4 py-2 text-sm font-medium text-white bg-gray-800 rounded-md hover:bg-gray-700 transition-colors"
+              >
+                Registrarse
+              </a>
+            </div>
+          }
+        }
+
+        <!-- Menú móvil button -->
+        <button
+          (click)="toggleMenu()"
+          class="md:hidden ml-4 p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none transition-all"
+        >
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            @if (!isMenuOpen) {
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            } @else {
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            }
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Menú móvil -->
+    @if (isMenuOpen) {
+      <div class="md:hidden pb-4">
+        <div class="pt-2 pb-3 space-y-1">
+          <a
+            routerLink="/productos"
+            (click)="toggleMenu()"
+            routerLinkActive="bg-gray-100 text-gray-900"
+            class="block px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          >
+            Productos
+          </a>
+
+          @if (currentUser$ | async; as user) {
+            <a
+              routerLink="/mis-pedidos"
+              (click)="toggleMenu()"
+              routerLinkActive="bg-gray-100 text-gray-900"
+              class="block px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              Mis Pedidos
+            </a>
+
+            @if (user.rol === 'ADMIN' || user.rol === 'MANAGER') {
+              <a
+                routerLink="/admin/ordenes"
+                (click)="toggleMenu()"
+                routerLinkActive="bg-gray-100 text-gray-900"
+                class="block px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              >
+                Dashboard Admin
+              </a>
+            }
+          }
+        </div>
+
+        <!-- Usuario en móvil -->
+        @if (currentUser$ | async; as user) {
+          <div class="pt-4 pb-3 border-t border-gray-200">
+            <div class="px-4 mb-3">
+              <div class="text-base font-medium text-gray-800">{{ user.nombre }}</div>
+              <div class="text-sm font-medium text-gray-500">{{ user.email }}</div>
+              <div class="text-xs text-gray-400 mt-1">{{ user.rol }}</div>
+            </div>
+            <button
+              (click)="logout()"
+              class="w-full text-left px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              Cerrar Sesión
+            </button>
+          </div>
+        } @else {
+          <!-- Solo mostrar si NO está autenticado -->
+          @if (!isAuthenticated()) {
+            <div class="pt-4 pb-3 border-t border-gray-200 space-y-1">
+              <a
+                routerLink="/login"
+                (click)="toggleMenu()"
+                class="block px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              >
+                Iniciar Sesión
+              </a>
+              <a
+                routerLink="/register"
+                (click)="toggleMenu()"
+                class="block px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              >
+                Registrarse
+              </a>
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+</nav>
+

@@ -1,0 +1,109 @@
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8">
+    <div class="text-center">
+      <div class="flex justify-center mb-4">
+        <img src="https://www.laeuropea.com.ec/wp-content/uploads/2023/06/LOGO-MOVIL.png" alt="La Europea" class="h-16 w-auto">
+      </div>
+      <h2 class="text-3xl font-bold text-gray-900 mb-2">
+        La Europea
+      </h2>
+      <p class="text-lg text-gray-600">
+        Inicia sesión en tu cuenta
+      </p>
+    </div>
+
+    <div class="bg-white py-8 px-6 shadow-xl rounded-lg">
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <!-- Mensaje de error -->
+        @if (errorMessage) {
+          <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg relative">
+            <span class="block sm:inline">{{ errorMessage }}</span>
+          </div>
+        }
+
+        <!-- Email -->
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="Ingresa tu email"
+            class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent transition-all"
+            [class.border-red-500]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          />
+          @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+            <p class="mt-2 text-sm text-red-600">Ingresa un email válido</p>
+          }
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+            Contraseña
+          </label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            placeholder="Ingresa tu contraseña"
+            class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent transition-all"
+            [class.border-red-500]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          />
+          @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+            <p class="mt-2 text-sm text-red-600">La contraseña debe tener al menos 6 caracteres</p>
+          }
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          [disabled]="loginForm.invalid || isLoading"
+          class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all"
+        >
+          @if (isLoading) {
+            <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          } @else {
+            <span>Iniciar Sesión</span>
+          }
+        </button>
+
+        <!-- Divider -->
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white text-gray-500">¿No tienes una cuenta?</span>
+          </div>
+        </div>
+
+        <!-- Link to Register -->
+        <div class="text-center">
+          <a
+            routerLink="/register"
+            class="font-medium text-gray-800 hover:text-gray-600 transition-colors"
+          >
+            Regístrate aquí
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Credenciales de prueba -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+      <p class="font-semibold text-blue-900 mb-2">Credenciales de prueba:</p>
+      <div class="space-y-1 text-blue-800">
+        <p><strong>Admin:</strong> admin&#64;laeuropea.com / admin123</p>
+        <p><strong>Manager:</strong> gerente1&#64;laeuropea.com / gerente123</p>
+        <p><strong>Usuario:</strong> vendedor1&#64;laeuropea.com / vendedor123</p>
+      </div>
+    </div>
+  </div>
+</div>
+

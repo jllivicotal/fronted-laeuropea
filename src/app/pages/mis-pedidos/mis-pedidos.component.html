@@ -1,0 +1,358 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 mb-2">📦 Mis Pedidos</h1>
+          <p class="text-gray-600">Aquí puedes ver el historial y estado de todos tus pedidos</p>
+        </div>
+        <a
+          routerLink="/productos"
+          class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+          </svg>
+          Continuar comprando
+        </a>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="flex items-center gap-4">
+        <label class="text-sm font-medium text-gray-700">Filtrar por estado:</label>
+        <select
+          [(ngModel)]="filtroEstado"
+          (change)="aplicarFiltro()"
+          class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          @for (estado of estadosDisponibles; track estado.value) {
+            <option [value]="estado.value">{{ estado.label }}</option>
+          }
+        </select>
+
+        <button
+          (click)="cargarPedidos()"
+          class="ml-auto inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+        >
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Actualizar
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (loading) {
+      <div class="flex items-center justify-center py-12">
+        <div class="text-center">
+          <svg class="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p class="text-gray-600">Cargando pedidos...</p>
+        </div>
+      </div>
+    }
+
+    <!-- Error -->
+    @if (error && !loading) {
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center">
+          <svg class="h-5 w-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+          </svg>
+          <p class="text-sm text-red-800">{{ error }}</p>
+        </div>
+      </div>
+    }
+
+    <!-- Lista de pedidos -->
+    @if (!loading && !error) {
+      @if (pedidos.length === 0) {
+        <!-- Sin pedidos -->
+        <div class="bg-white rounded-lg shadow-md p-12 text-center">
+          <div class="max-w-md mx-auto">
+            <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+            </svg>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">No tienes pedidos aún</h3>
+            <p class="text-gray-600 mb-6">Explora nuestros productos y realiza tu primera orden</p>
+            <a
+              routerLink="/productos"
+              class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+              </svg>
+              Ir a productos
+            </a>
+          </div>
+        </div>
+      } @else {
+        <!-- Grid de pedidos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (pedido of pedidos; track pedido._id) {
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
+              <!-- Header del pedido -->
+              <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-medium">Pedido</span>
+                  <span class="text-xs opacity-75">{{ formatearFecha(pedido.fechaOrden) }}</span>
+                </div>
+                <div class="text-2xl font-bold">#{{ pedido.numeroOrden }}</div>
+              </div>
+
+              <!-- Contenido del pedido -->
+              <div class="p-4 space-y-3">
+                <!-- Estado -->
+                <div class="flex items-center gap-2">
+                  <span class="text-sm text-gray-600">Estado:</span>
+                  <span
+                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border"
+                    [class]="getEstadoClass(pedido.estado)"
+                  >
+                    {{ getEstadoIcono(pedido.estado) }} {{ pedido.estado }}
+                  </span>
+                </div>
+
+                <!-- Ciudad -->
+                @if (pedido.ciudad) {
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-sm text-gray-600">{{ getNombreCiudad(pedido.ciudad) }}</span>
+                  </div>
+                }
+
+                <!-- Total -->
+                <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+                  <span class="text-sm font-medium text-gray-600">Total:</span>
+                  <span class="text-xl font-bold text-blue-600">${{ pedido.total?.toFixed(2) || '0.00' }}</span>
+                </div>
+
+                <!-- Cliente info -->
+                <div class="text-xs text-gray-500 pt-2 border-t border-gray-100">
+                  <div class="truncate">
+                    <strong>Cliente:</strong> {{ pedido.cliente?.nombre || 'N/A' }}
+                  </div>
+                  @if (pedido.cliente?.telefono) {
+                    <div>
+                      <strong>Tel:</strong> {{ pedido.cliente.telefono }}
+                    </div>
+                  }
+                </div>
+
+                <!-- Botón ver detalle -->
+                <button
+                  (click)="verDetalle(pedido)"
+                  class="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  Ver detalle
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+  </div>
+
+  <!-- Modal de detalle -->
+  @if (mostrarModalDetalle && pedidoSeleccionado) {
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <!-- Overlay -->
+      <div
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
+        (click)="cerrarModalDetalle()"
+      ></div>
+
+      <!-- Modal Container -->
+      <div class="flex min-h-full items-center justify-center p-4">
+        <div class="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all w-full max-w-4xl">
+
+          <!-- Modal Header -->
+          <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 text-white">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-2xl font-bold">Detalle del Pedido</h3>
+                <p class="text-blue-100 text-sm mt-1">#{{ pedidoSeleccionado.numeroOrden }}</p>
+              </div>
+              <button
+                (click)="cerrarModalDetalle()"
+                class="text-white hover:text-gray-200 transition-colors"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Modal Content -->
+          <div class="px-6 py-6 max-h-[70vh] overflow-y-auto">
+
+            <!-- Información general -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+              <!-- Información del pedido -->
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+                  </svg>
+                  Información del Pedido
+                </h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Fecha:</span>
+                    <span class="font-medium text-gray-900">{{ formatearFecha(pedidoSeleccionado.fechaOrden) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Estado:</span>
+                    <span
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border"
+                      [class]="getEstadoClass(pedidoSeleccionado.estado)"
+                    >
+                      {{ getEstadoIcono(pedidoSeleccionado.estado) }} {{ pedidoSeleccionado.estado }}
+                    </span>
+                  </div>
+                  @if (pedidoSeleccionado.ciudad) {
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Ciudad:</span>
+                      <span class="font-medium text-gray-900">{{ getNombreCiudad(pedidoSeleccionado.ciudad) }}</span>
+                    </div>
+                  }
+                  @if (pedidoSeleccionado.aprobada && pedidoSeleccionado.fechaAprobacion) {
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Fecha aprobación:</span>
+                      <span class="font-medium text-gray-900">{{ formatearFecha(pedidoSeleccionado.fechaAprobacion) }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Información del cliente -->
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                  </svg>
+                  Datos del Cliente
+                </h4>
+                <div class="space-y-2 text-sm">
+                  <div>
+                    <span class="text-gray-600">Nombre:</span>
+                    <p class="font-medium text-gray-900">{{ pedidoSeleccionado.cliente?.nombre || 'N/A' }}</p>
+                  </div>
+                  @if (pedidoSeleccionado.cliente?.email) {
+                    <div>
+                      <span class="text-gray-600">Email:</span>
+                      <p class="font-medium text-gray-900">{{ pedidoSeleccionado.cliente.email }}</p>
+                    </div>
+                  }
+                  @if (pedidoSeleccionado.cliente?.telefono) {
+                    <div>
+                      <span class="text-gray-600">Teléfono:</span>
+                      <p class="font-medium text-gray-900">{{ pedidoSeleccionado.cliente.telefono }}</p>
+                    </div>
+                  }
+                  @if (pedidoSeleccionado.cliente?.direccion) {
+                    <div>
+                      <span class="text-gray-600">Dirección:</span>
+                      <p class="font-medium text-gray-900">{{ pedidoSeleccionado.cliente.direccion }}</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Observaciones -->
+            @if (pedidoSeleccionado.observacion) {
+              <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
+                <h4 class="font-semibold text-gray-900 mb-2">📝 Observaciones</h4>
+                <p class="text-sm text-gray-700">{{ pedidoSeleccionado.observacion }}</p>
+              </div>
+            }
+
+            <!-- Detalle de productos -->
+            @if (pedidoSeleccionado.detalles && pedidoSeleccionado.detalles.length > 0) {
+              <div>
+                <h4 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"></path>
+                  </svg>
+                  Productos ({{ pedidoSeleccionado.detalles.length }})
+                </h4>
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">P. Unit.</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      @for (detalle of pedidoSeleccionado.detalles; track detalle._id) {
+                        <tr class="hover:bg-gray-50">
+                          <td class="px-4 py-3">
+                            <div class="text-sm font-medium text-gray-900">{{ detalle.nombreProducto }}</div>
+                          </td>
+                          <td class="px-4 py-3 text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {{ detalle.cantidad }}
+                            </span>
+                          </td>
+                          <td class="px-4 py-3 text-right text-sm text-gray-900">
+                            ${{ detalle.precioUnitario?.toFixed(2) }}
+                          </td>
+                          <td class="px-4 py-3 text-right text-sm font-semibold text-gray-900">
+                            ${{ detalle.subtotal?.toFixed(2) }}
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                    <tfoot class="bg-gray-50">
+                      <tr>
+                        <td colspan="3" class="px-4 py-3 text-right text-sm font-bold text-gray-900">Total:</td>
+                        <td class="px-4 py-3 text-right text-lg font-bold text-blue-600">
+                          ${{ pedidoSeleccionado.total?.toFixed(2) || '0.00' }}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            }
+
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="bg-gray-50 px-6 py-4 flex justify-end">
+            <button
+              (click)="cerrarModalDetalle()"
+              class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

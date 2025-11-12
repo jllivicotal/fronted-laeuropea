@@ -1,0 +1,690 @@
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Carrito de Compras</h1>
+
+    <!-- Empty Cart -->
+    @if (items.length === 0 && !loading) {
+      <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <svg class="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+        </svg>
+        <h2 class="text-2xl font-semibold text-gray-900 mb-2">Tu carrito está vacío</h2>
+        <p class="text-gray-600 mb-6">Agrega algunos productos para comenzar</p>
+        <button
+          (click)="continuarComprando()"
+          class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        >
+          Ver Productos
+        </button>
+      </div>
+    }
+
+    <!-- Cart with Items -->
+    @if (items.length > 0 && !mostrarCheckout) {
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Cart Items -->
+        <div class="lg:col-span-2">
+          <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <div class="flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-gray-900">
+                  Items en el carrito ({{ items.length }})
+                </h2>
+                <button
+                  (click)="vaciarCarrito()"
+                  class="text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
+                >
+                  Vaciar carrito
+                </button>
+              </div>
+            </div>
+
+            <div class="divide-y divide-gray-200">
+              @for (item of items; track item.producto._id) {
+                <div class="p-6">
+                  <div class="flex gap-4">
+                    <!-- Product Image -->
+                    <div class="flex-shrink-0 w-24 h-24">
+                      <img
+                        [src]="(item.producto.imagenes && item.producto.imagenes.length > 0) ? item.producto.imagenes[0] : imagenPorDefecto"
+                        [alt]="item.producto.nombre"
+                        class="w-full h-full object-cover rounded-lg"
+                        (error)="onImageError($event)" />
+                    </div>
+
+                    <!-- Product Info -->
+                    <div class="flex-1 min-w-0">
+                      <div class="flex justify-between">
+                        <div class="flex-1">
+                          <h3 class="text-lg font-medium text-gray-900 mb-1">
+                            <a
+                              [routerLink]="['/productos', item.producto._id]"
+                              class="hover:text-blue-600 transition-colors"
+                            >
+                              {{ item.producto.nombre }}
+                            </a>
+                          </h3>
+                          <p class="text-sm text-gray-500 mb-2">
+                            {{ item.producto.categoria }}
+                          </p>
+                          <p class="text-sm text-gray-600 line-clamp-2">
+                            {{ item.producto.descripcion }}
+                          </p>
+                        </div>
+
+                        <div class="ml-4 text-right">
+                          <p class="text-lg font-bold text-gray-900">
+                            ${{ item.producto.precio.toFixed(2) }}
+                          </p>
+                          <p class="text-sm text-gray-500">
+                            c/u
+                          </p>
+                        </div>
+                      </div>
+
+                      <!-- Quantity Controls -->
+                      <div class="mt-4 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <button
+                            (click)="decrementarCantidad(item)"
+                            [disabled]="item.cantidad <= 1"
+                            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                            </svg>
+                          </button>
+
+                          <input
+                            type="number"
+                            [value]="item.cantidad"
+                            (change)="actualizarCantidad(item.producto._id, +$any($event.target).value)"
+                            min="1"
+                            [max]="item.producto.stock"
+                            class="w-16 text-center border border-gray-300 rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+
+                          <button
+                            (click)="incrementarCantidad(item)"
+                            [disabled]="item.cantidad >= item.producto.stock"
+                            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                          </button>
+
+                          <span class="ml-2 text-sm text-gray-600">
+                            ({{ item.producto.stock }} disponibles)
+                          </span>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                          <p class="text-lg font-bold text-gray-900">
+                            ${{ getSubtotal(item).toFixed(2) }}
+                          </p>
+                          <button
+                            (click)="abrirModalEliminar(item)"
+                            class="text-red-600 hover:text-red-700 transition-colors"
+                            title="Eliminar"
+                          >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+            <h2 class="text-lg font-semibold text-gray-900 mb-6">Resumen de Orden</h2>
+
+            <div class="space-y-3 mb-6">
+              <div class="flex justify-between text-gray-600">
+                <span>Subtotal</span>
+                <span>${{ total.toFixed(2) }}</span>
+              </div>
+              <div class="flex justify-between text-gray-600">
+                <span>Envío</span>
+                <span class="text-green-600">Gratis</span>
+              </div>
+              <div class="border-t border-gray-200 pt-3 flex justify-between text-lg font-bold text-gray-900">
+                <span>Total</span>
+                <span>${{ total.toFixed(2) }}</span>
+              </div>
+            </div>
+
+            @if (error) {
+              <div class="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
+                <p class="text-sm text-red-800">{{ error }}</p>
+              </div>
+            }
+
+            <button
+              (click)="irACheckout()"
+              [disabled]="loading"
+              class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              @if (loading) {
+                <span class="flex items-center justify-center">
+                  <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Procesando...
+                </span>
+              } @else {
+                Proceder al Checkout
+              }
+            </button>
+
+            <button
+              (click)="continuarComprando()"
+              class="w-full mt-3 bg-white text-gray-700 py-3 px-4 rounded-lg font-medium border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+            >
+              Continuar Comprando
+            </button>
+
+            <!-- Trust Badges -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+              <div class="space-y-3">
+                <div class="flex items-center text-sm text-gray-600">
+                  <svg class="h-5 w-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  Envío seguro y rápido
+                </div>
+                <div class="flex items-center text-sm text-gray-600">
+                  <svg class="h-5 w-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                  </svg>
+                  Pago 100% seguro
+                </div>
+                <div class="flex items-center text-sm text-gray-600">
+                  <svg class="h-5 w-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  </svg>
+                  Devolución en 30 días
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Checkout Form -->
+    @if (mostrarCheckout && items.length > 0) {
+      <div class="max-w-4xl mx-auto">
+        <div class="mb-6">
+          <button
+            (click)="cancelarCheckout()"
+            class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Volver al carrito
+          </button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Información de Envío</h2>
+
+          @if (error) {
+            <div class="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+              <div class="flex">
+                <svg class="h-5 w-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                </svg>
+                <p class="text-sm text-red-800">{{ error }}</p>
+              </div>
+            </div>
+          }
+
+          <form [formGroup]="checkoutForm" (ngSubmit)="procesarOrden()">
+            <!-- Mensaje informativo -->
+            <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+              <div class="flex items-start">
+                <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                </svg>
+                <div>
+                  <p class="text-sm font-medium text-blue-900">Información autocompletada</p>
+                  <p class="text-sm text-blue-700 mt-1">
+                    Algunos campos se han llenado con la información de tu perfil. Puedes modificarlos si lo deseas.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Nombre -->
+              <div class="md:col-span-2">
+                <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">
+                  <div class="flex items-center gap-2">
+                    <span>Nombre completo *</span>
+                    @if (checkoutForm.get('nombre')?.value) {
+                      <span class="inline-flex items-center text-xs text-blue-600">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                        </svg>
+                        Desde tu perfil
+                      </span>
+                    }
+                  </div>
+                </label>
+                <input
+                  type="text"
+                  id="nombre"
+                  formControlName="nombre"
+                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                  [class.border-red-500]="nombreInvalid"
+                  [class.bg-blue-50]="checkoutForm.get('nombre')?.value"
+                  placeholder="Juan Pérez"
+                />
+                @if (nombreInvalid) {
+                  <p class="mt-1 text-sm text-red-600">El nombre es requerido (mínimo 3 caracteres)</p>
+                }
+              </div>
+
+              <!-- Email -->
+              <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                  <div class="flex items-center gap-2">
+                    <span>Email *</span>
+                    @if (checkoutForm.get('email')?.value) {
+                      <span class="inline-flex items-center text-xs text-blue-600">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                        </svg>
+                        Desde tu perfil
+                      </span>
+                    }
+                  </div>
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  formControlName="email"
+                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                  [class.border-red-500]="emailInvalid"
+                  [class.bg-blue-50]="checkoutForm.get('email')?.value"
+                  placeholder="correo@ejemplo.com"
+                />
+                @if (emailInvalid) {
+                  <p class="mt-1 text-sm text-red-600">Email válido requerido</p>
+                }
+              </div>
+
+              <!-- Teléfono -->
+              <div>
+                <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">
+                  Teléfono *
+                </label>
+                <input
+                  type="tel"
+                  id="telefono"
+                  formControlName="telefono"
+                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                  [class.border-red-500]="telefonoInvalid"
+                  placeholder="1234567890"
+                />
+                @if (telefonoInvalid) {
+                  <p class="mt-1 text-sm text-red-600">Teléfono requerido (10 dígitos)</p>
+                }
+              </div>
+
+              <!-- Dirección -->
+              <div class="md:col-span-2">
+                <label for="direccion" class="block text-sm font-medium text-gray-700 mb-2">
+                  Dirección completa *
+                </label>
+                <input
+                  type="text"
+                  id="direccion"
+                  formControlName="direccion"
+                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                  [class.border-red-500]="direccionInvalid"
+                  placeholder="Calle, número, colonia"
+                />
+                @if (direccionInvalid) {
+                  <p class="mt-1 text-sm text-red-600">Dirección requerida (mínimo 10 caracteres)</p>
+                }
+              </div>
+
+              <!-- Ciudad -->
+              <div>
+                <label for="ciudad" class="block text-sm font-medium text-gray-700 mb-2">
+                  <div class="flex items-center gap-2">
+                    <span>Ciudad *</span>
+                    @if (checkoutForm.get('ciudad')?.value) {
+                      <span class="inline-flex items-center text-xs text-blue-600">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                        </svg>
+                        Desde tu perfil
+                      </span>
+                    }
+                  </div>
+                </label>
+                @if (loadingCiudades) {
+                  <div class="flex items-center justify-center h-10 border border-gray-300 rounded-lg bg-gray-50">
+                    <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                } @else {
+                  <select
+                    id="ciudad"
+                    formControlName="ciudad"
+                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                    [class.border-red-500]="ciudadInvalid"
+                    [class.bg-blue-50]="checkoutForm.get('ciudad')?.value">
+                    <option value="" disabled selected>Selecciona tu ciudad</option>
+                    @for (ciudad of ciudades; track ciudad._id) {
+                      <option [value]="ciudad._id">{{ ciudad.nombre }}</option>
+                    }
+                  </select>
+                }
+                @if (ciudadInvalid) {
+                  <p class="mt-1 text-sm text-red-600">Ciudad requerida</p>
+                }
+              </div>
+
+              <!-- Código Postal -->
+              <div>
+                <label for="codigoPostal" class="block text-sm font-medium text-gray-700 mb-2">
+                  Código Postal *
+                </label>
+                <input
+                  type="text"
+                  id="codigoPostal"
+                  formControlName="codigoPostal"
+                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                  [class.border-red-500]="codigoPostalInvalid"
+                  placeholder="12345"
+                />
+                @if (codigoPostalInvalid) {
+                  <p class="mt-1 text-sm text-red-600">Código postal requerido (5 dígitos)</p>
+                }
+              </div>
+
+              <!-- Notas -->
+              <div class="md:col-span-2">
+                <label for="notas" class="block text-sm font-medium text-gray-700 mb-2">
+                  Notas adicionales (opcional)
+                </label>
+                <textarea
+                  id="notas"
+                  formControlName="notas"
+                  rows="3"
+                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow resize-none"
+                  placeholder="Instrucciones especiales de entrega..."
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Order Summary in Checkout -->
+            <div class="mt-8 pt-8 border-t border-gray-200">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Resumen de Orden</h3>
+              <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div class="flex justify-between text-gray-600">
+                  <span>{{ items.length }} producto(s)</span>
+                  <span>${{ total.toFixed(2) }}</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                  <span>Envío</span>
+                  <span class="text-green-600">Gratis</span>
+                </div>
+                <div class="border-t border-gray-300 pt-2 flex justify-between text-xl font-bold text-gray-900">
+                  <span>Total</span>
+                  <span>${{ total.toFixed(2) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-8 flex gap-4">
+              <button
+                type="button"
+                (click)="cancelarCheckout()"
+                class="flex-1 bg-white text-gray-700 py-3 px-6 rounded-lg font-semibold border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                [disabled]="loading || checkoutForm.invalid"
+                class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                @if (loading) {
+                  <span class="flex items-center justify-center">
+                    <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Procesando...
+                  </span>
+                } @else {
+                  Confirmar Orden
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Modal de Confirmación de Eliminación -->
+  @if (mostrarModalEliminar && productoAEliminar) {
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <!-- Overlay -->
+      <div
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
+        (click)="cerrarModalEliminar()"
+      ></div>
+
+      <!-- Modal Container -->
+      <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+          <!-- Modal Content -->
+          <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <!-- Icon -->
+              <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+              </div>
+
+              <!-- Content -->
+              <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left flex-1">
+                <h3 class="text-lg font-semibold leading-6 text-gray-900 mb-2" id="modal-title">
+                  Eliminar producto
+                </h3>
+
+                <!-- Product Info -->
+                <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <div class="flex items-center gap-3">
+                    <img
+                      [src]="(productoAEliminar.producto.imagenes && productoAEliminar.producto.imagenes.length > 0) ? productoAEliminar.producto.imagenes[0] : imagenPorDefecto"
+                      [alt]="productoAEliminar.producto.nombre"
+                      class="w-16 h-16 object-cover rounded"
+                      (error)="onImageError($event)"
+                    />
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 truncate">
+                        {{ productoAEliminar.producto.nombre }}
+                      </p>
+                      <p class="text-sm text-gray-500">
+                        Cantidad: {{ productoAEliminar.cantidad }}
+                      </p>
+                      <p class="text-sm font-semibold text-gray-900">
+                        ${{ (productoAEliminar.producto.precio * productoAEliminar.cantidad).toFixed(2) }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <p class="mt-4 text-sm text-gray-600">
+                  ¿Estás seguro de que deseas eliminar este producto del carrito? Esta acción no se puede deshacer.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Actions -->
+          <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-3">
+            <button
+              type="button"
+              (click)="confirmarEliminar()"
+              class="inline-flex w-full justify-center rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors sm:w-auto"
+            >
+              <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+              Sí, eliminar
+            </button>
+            <button
+              type="button"
+              (click)="cerrarModalEliminar()"
+              class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors sm:mt-0 sm:w-auto"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal de Éxito - Orden Creada -->
+  @if (mostrarModalExito && ordenCreada) {
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <!-- Overlay -->
+      <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
+
+      <!-- Modal Container -->
+      <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+          <!-- Modal Content -->
+          <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <!-- Icon de éxito -->
+              <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+
+              <!-- Content -->
+              <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left flex-1">
+                <h3 class="text-lg font-semibold leading-6 text-gray-900 mb-2" id="modal-title">
+                  🎉 ¡Orden creada exitosamente!
+                </h3>
+
+                <!-- Información de la orden -->
+                <div class="mt-4 space-y-3">
+                  <!-- Número de orden -->
+                  <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <p class="text-xs text-green-700 font-medium mb-1">Número de orden</p>
+                    <p class="text-2xl font-bold text-green-900">{{ ordenCreada.numeroOrden }}</p>
+                  </div>
+
+                  <!-- Información de ciudad -->
+                  @if (ordenCreada.ciudad) {
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                      <p class="text-xs text-gray-600 mb-1">Ciudad</p>
+                      <p class="text-sm font-medium text-gray-900">
+                        {{ ordenCreada.ciudad.nombre || 'N/A' }}
+                      </p>
+                    </div>
+                  }
+
+                  <!-- Total -->
+                  <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p class="text-xs text-blue-700 mb-1">Total de la orden</p>
+                    <p class="text-xl font-bold text-blue-900">
+                      ${{ ordenCreada.total?.toFixed(2) || '0.00' }}
+                    </p>
+                  </div>
+
+                  <!-- Estado -->
+                  <div class="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg">
+                    <svg class="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                      <p class="text-xs text-yellow-700">Estado</p>
+                      <p class="text-sm font-medium text-yellow-900">{{ ordenCreada.estado || 'PENDIENTE' }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
+                  <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0">
+                      <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm font-semibold text-blue-900 mb-1">
+                        ✉️ Correo de confirmación enviado
+                      </p>
+                      <p class="text-sm text-gray-700">
+                        Hemos enviado un <strong>correo electrónico</strong> a <strong>{{ ordenCreada.cliente?.email }}</strong> con todos los detalles de tu pedido, incluyendo el número de orden, productos y total.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+                  <p class="text-xs text-gray-600 mb-2 font-medium">📋 Próximos pasos:</p>
+                  <ul class="text-sm text-gray-700 space-y-1 ml-4 list-disc">
+                    <li>Revisa tu correo electrónico</li>
+                    <li>Nuestro equipo revisará tu pedido</li>
+                    <li>Te notificaremos cuando sea aprobado</li>
+                    <li>Coordinaremos la entrega contigo</li>
+                  </ul>
+                </div>
+
+                @if (ordenCreada.observacion) {
+                  <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+                    <p class="text-xs text-gray-600 mb-1">Nota adicional</p>
+                    <p class="text-sm text-gray-700">{{ ordenCreada.observacion }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Actions -->
+          <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <button
+              type="button"
+              (click)="cerrarModalExito()"
+              class="inline-flex w-full justify-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all sm:w-auto"
+            >
+              <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+              </svg>
+              Continuar comprando
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
