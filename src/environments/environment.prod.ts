@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://ec2-100-28-229-16.compute-1.amazonaws.com:3000',
-  apiBaseUrl: 'http://ec2-100-28-229-16.compute-1.amazonaws.com:3000/api',
-  graphqlUrl: 'http://ec2-100-28-229-16.compute-1.amazonaws.com:3000/graphql'
+  apiUrl: 'http://localhost:3000',
+  apiBaseUrl: 'http://localhost:3000/api',
+  graphqlUrl: 'http://localhost:3000/graphql'
 };

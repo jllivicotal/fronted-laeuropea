@@ -44,11 +44,25 @@ export class AdminOrdenesComponent implements OnInit {
 
     this.ordenService.getOrdenes().subscribe({
       next: (response: any) => {
-        this.ordenes = response.ordenes || response;
+        // Asegurarse de que siempre sea un array
+        if (Array.isArray(response)) {
+          this.ordenes = response;
+        } else if (response.ordenes && Array.isArray(response.ordenes)) {
+          this.ordenes = response.ordenes;
+        } else {
+          this.ordenes = [];
+        }
+
+        // Ordenar por fecha más reciente primero
+        this.ordenes.sort((a, b) =>
+          new Date(b.fechaOrden).getTime() - new Date(a.fechaOrden).getTime()
+        );
+
         this.aplicarFiltros();
         this.loading = false;
       },
       error: (err: any) => {
+        console.error('Error al cargar órdenes:', err);
         this.error = err.error?.message || 'Error al cargar las órdenes';
         this.loading = false;
       }
@@ -85,11 +99,20 @@ export class AdminOrdenesComponent implements OnInit {
 
     this.ordenService.getOrdenById(orden._id).subscribe({
       next: (response: any) => {
-        this.detallesOrden = response.detalles || [];
+        // Manejar diferentes estructuras de respuesta
+        if (response.detalles && Array.isArray(response.detalles)) {
+          this.detallesOrden = response.detalles;
+        } else if (Array.isArray(response)) {
+          this.detallesOrden = response;
+        } else {
+          this.detallesOrden = [];
+          console.warn('No se encontraron detalles en la respuesta:', response);
+        }
         this.loadingModal = false;
       },
       error: (err: any) => {
         console.error('Error al cargar detalles:', err);
+        this.error = 'Error al cargar los detalles de la orden';
         this.loadingModal = false;
       }
     });
@@ -106,7 +129,7 @@ export class AdminOrdenesComponent implements OnInit {
   aprobarOrden(): void {
     if (!this.ordenSeleccionada) return;
 
-    if (!confirm('¿Estás seguro de aprobar esta orden?')) return;
+    if (!confirm(`¿Estás seguro de aprobar la orden ${this.ordenSeleccionada.numeroOrden}? Se enviará un correo de confirmación al cliente.`)) return;
 
     this.procesandoAccion = true;
 
@@ -115,6 +138,7 @@ export class AdminOrdenesComponent implements OnInit {
       this.observacionAprobacion || undefined
     ).subscribe({
       next: (ordenActualizada: Orden) => {
+        // Actualizar orden en la lista
         const index = this.ordenes.findIndex(o => o._id === ordenActualizada._id);
         if (index !== -1) {
           this.ordenes[index] = ordenActualizada;
@@ -122,10 +146,15 @@ export class AdminOrdenesComponent implements OnInit {
         this.aplicarFiltros();
         this.procesandoAccion = false;
         this.cerrarModal();
-        alert('Orden aprobada exitosamente');
+
+        // Mostrar mensaje de éxito
+        setTimeout(() => {
+          alert(`✅ Orden ${ordenActualizada.numeroOrden} aprobada exitosamente.\n\n📧 Se ha enviado un correo de confirmación al cliente.`);
+        }, 100);
       },
       error: (err: any) => {
-        alert(err.error?.message || 'Error al aprobar la orden');
+        console.error('Error al aprobar orden:', err);
+        alert(`❌ Error al aprobar la orden: ${err.error?.message || 'Error desconocido'}`);
         this.procesandoAccion = false;
       }
     });
@@ -135,11 +164,11 @@ export class AdminOrdenesComponent implements OnInit {
     if (!this.ordenSeleccionada) return;
 
     if (!this.motivoRechazo.trim()) {
-      alert('Por favor ingresa un motivo de rechazo');
+      alert('⚠️ Por favor ingresa un motivo de rechazo');
       return;
     }
 
-    if (!confirm('¿Estás seguro de rechazar esta orden?')) return;
+    if (!confirm(`¿Estás seguro de rechazar la orden ${this.ordenSeleccionada.numeroOrden}? Se enviará un correo al cliente con el motivo del rechazo.`)) return;
 
     this.procesandoAccion = true;
 
@@ -148,6 +177,7 @@ export class AdminOrdenesComponent implements OnInit {
       this.motivoRechazo
     ).subscribe({
       next: (ordenActualizada: Orden) => {
+        // Actualizar orden en la lista
         const index = this.ordenes.findIndex(o => o._id === ordenActualizada._id);
         if (index !== -1) {
           this.ordenes[index] = ordenActualizada;
@@ -155,10 +185,15 @@ export class AdminOrdenesComponent implements OnInit {
         this.aplicarFiltros();
         this.procesandoAccion = false;
         this.cerrarModal();
-        alert('Orden rechazada');
+
+        // Mostrar mensaje de éxito
+        setTimeout(() => {
+          alert(`🚫 Orden ${ordenActualizada.numeroOrden} rechazada.\n\n📧 Se ha enviado un correo al cliente con el motivo del rechazo.`);
+        }, 100);
       },
       error: (err: any) => {
-        alert(err.error?.message || 'Error al rechazar la orden');
+        console.error('Error al rechazar orden:', err);
+        alert(`❌ Error al rechazar la orden: ${err.error?.message || 'Error desconocido'}`);
         this.procesandoAccion = false;
       }
     });

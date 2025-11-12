@@ -1,0 +1,106 @@
+/* Animaciones para modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Aplicar animación al modal */
+.fixed {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.inline-block {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Estilos para las cards de estadísticas */
+.stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para filas de tabla hover */
+tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Loading spinner personalizado */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Estilos para badges de estado */
+.badge-pendiente {
+  background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
+}
+
+.badge-aprobada {
+  background: linear-gradient(135deg, #d1fae5 0%, #34d399 100%);
+}
+
+.badge-rechazada {
+  background: linear-gradient(135deg, #fee2e2 0%, #f87171 100%);
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Animación para botones */
+button {
+  transition: all 0.2s ease;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* Estilos para inputs en el modal */
+textarea:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Custom scrollbar para el modal */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
