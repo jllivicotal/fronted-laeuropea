@@ -34,6 +34,12 @@ export class AdminOrdenesComponent implements OnInit {
   observacionAprobacion = '';
   procesandoAccion = false;
 
+  // Modales de confirmación
+  mostrarModalConfirmacionAprobar = false;
+  mostrarModalConfirmacionRechazar = false;
+  mostrarModalAdvertencia = false;
+  mensajeAdvertencia = '';
+
   ngOnInit(): void {
     this.cargarOrdenes();
   }
@@ -91,6 +97,7 @@ export class AdminOrdenesComponent implements OnInit {
   }
 
   verDetalle(orden: Orden): void {
+    console.log('📋 Abriendo detalle de orden:', orden._id);
     this.ordenSeleccionada = orden;
     this.mostrarModal = true;
     this.loadingModal = true;
@@ -99,21 +106,36 @@ export class AdminOrdenesComponent implements OnInit {
 
     this.ordenService.getOrdenById(orden._id).subscribe({
       next: (response: any) => {
-        // Manejar diferentes estructuras de respuesta
-        if (response.detalles && Array.isArray(response.detalles)) {
+        console.log('📦 Respuesta del backend:', response);
+
+        // El backend devuelve la orden completa con detalles integrados
+        if (response && response.detalles && Array.isArray(response.detalles)) {
+          // Caso: { ...ordenData, detalles: [...] }
           this.detallesOrden = response.detalles;
+          // Actualizar la orden seleccionada con todos los datos
+          this.ordenSeleccionada = { ...orden, ...response };
+        } else if (response.orden && response.detalles) {
+          // Caso: { orden: {...}, detalles: [...] }
+          this.detallesOrden = response.detalles;
+          this.ordenSeleccionada = response.orden;
         } else if (Array.isArray(response)) {
+          // Caso: directamente un array de detalles
           this.detallesOrden = response;
         } else {
+          // Si no hay detalles, inicializar array vacío
+          console.warn('⚠️ No se encontraron detalles en la respuesta');
           this.detallesOrden = [];
-          console.warn('No se encontraron detalles en la respuesta:', response);
         }
+
+        console.log('✅ Detalles cargados:', this.detallesOrden.length, 'items');
         this.loadingModal = false;
       },
       error: (err: any) => {
-        console.error('Error al cargar detalles:', err);
+        console.error('❌ Error al cargar detalles:', err);
         this.error = 'Error al cargar los detalles de la orden';
+        this.detallesOrden = [];
         this.loadingModal = false;
+        // No cerrar el modal, mostrar el error dentro
       }
     });
   }
@@ -124,12 +146,28 @@ export class AdminOrdenesComponent implements OnInit {
     this.detallesOrden = [];
     this.motivoRechazo = '';
     this.observacionAprobacion = '';
+    this.error = null; // Limpiar error al cerrar modal
+  }
+
+  // Mostrar modal de confirmación para aprobar
+  mostrarConfirmacionAprobar(): void {
+    if (!this.ordenSeleccionada) return;
+    this.mostrarModalConfirmacionAprobar = true;
+  }
+
+  // Cancelar aprobación
+  cancelarAprobacion(): void {
+    this.mostrarModalConfirmacionAprobar = false;
+  }
+
+  // Confirmar aprobación
+  confirmarAprobacion(): void {
+    this.mostrarModalConfirmacionAprobar = false;
+    this.aprobarOrden();
   }
 
   aprobarOrden(): void {
     if (!this.ordenSeleccionada) return;
-
-    if (!confirm(`¿Estás seguro de aprobar la orden ${this.ordenSeleccionada.numeroOrden}? Se enviará un correo de confirmación al cliente.`)) return;
 
     this.procesandoAccion = true;
 
@@ -160,15 +198,44 @@ export class AdminOrdenesComponent implements OnInit {
     });
   }
 
+  // Mostrar modal de confirmación para rechazar
+  mostrarConfirmacionRechazar(): void {
+    if (!this.ordenSeleccionada) return;
+
+    if (!this.motivoRechazo.trim()) {
+      this.mensajeAdvertencia = 'Por favor ingresa un motivo de rechazo antes de continuar.';
+      this.mostrarModalAdvertencia = true;
+      return;
+    }
+
+    this.mostrarModalConfirmacionRechazar = true;
+  }
+
+  // Cancelar rechazo
+  cancelarRechazo(): void {
+    this.mostrarModalConfirmacionRechazar = false;
+  }
+
+  // Confirmar rechazo
+  confirmarRechazo(): void {
+    this.mostrarModalConfirmacionRechazar = false;
+    this.rechazarOrden();
+  }
+
+  // Cerrar modal de advertencia
+  cerrarModalAdvertencia(): void {
+    this.mostrarModalAdvertencia = false;
+    this.mensajeAdvertencia = '';
+  }
+
   rechazarOrden(): void {
     if (!this.ordenSeleccionada) return;
 
     if (!this.motivoRechazo.trim()) {
-      alert('⚠️ Por favor ingresa un motivo de rechazo');
+      this.mensajeAdvertencia = 'Por favor ingresa un motivo de rechazo antes de continuar.';
+      this.mostrarModalAdvertencia = true;
       return;
     }
-
-    if (!confirm(`¿Estás seguro de rechazar la orden ${this.ordenSeleccionada.numeroOrden}? Se enviará un correo al cliente con el motivo del rechazo.`)) return;
 
     this.procesandoAccion = true;
 

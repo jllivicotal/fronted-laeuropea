@@ -19,13 +19,33 @@
   }
 }
 
-/* Aplicar animación al modal */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Aplicar animación al modal principal */
 .fixed {
   animation: fadeIn 0.3s ease-out;
 }
 
 .inline-block {
   animation: slideUp 0.3s ease-out;
+}
+
+/* Animación para modales de confirmación */
+.z-60 {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.z-60 > div > div.relative {
+  animation: scaleIn 0.2s ease-out;
 }
 
 /* Estilos para las cards de estadísticas */
